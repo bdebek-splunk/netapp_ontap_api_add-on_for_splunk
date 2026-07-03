@@ -1,0 +1,98 @@
+{
+	"dataSources": {
+		"ds_search_1": {
+			"type": "ds.search",
+			"options": {
+				"query": "| rest /servicesNS/nobody/Splunk_TA_NetApp_ontap/Splunk_TA_NetApp_ontap_account/\n| table title username host server_status",
+				"queryParameters": {
+					"earliest": "0"
+				}
+			},
+			"name": "NetApp Accounts"
+		}
+	},
+	"visualizations": {
+		"viz_table_1": {
+			"type": "splunk.table",
+			"options": {
+				"count": 20,
+				"dataOverlayMode": "none",
+				"drilldown": "none",
+				"percentagesRow": false,
+				"rowNumbers": false,
+				"totalsRow": false,
+				"wrap": true,
+				"columnFormat": {
+					"server_status": {
+						"data": "> table | seriesByName(\"server_status\") | formatByType(server_statusColumnFormatEditorConfig)",
+						"rowColors": "> table | seriesByName('server_status') | pick(server_statusRowColorsEditorConfig)",
+						"rowBackgroundColors": "> table | seriesByName(\"server_status\") | matchValue(server_statusRowBackgroundColorsEditorConfig)"
+					}
+				}
+			},
+			"dataSources": {
+				"primary": "ds_search_1"
+			},
+			"context": {
+				"server_statusColumnFormatEditorConfig": {
+					"string": {
+						"unitPosition": "after"
+					}
+				},
+				"server_statusRowColorsEditorConfig": [
+					"#3c444d"
+				],
+				"server_statusRowBackgroundColorsEditorConfig": [
+					{
+						"match": "Connected",
+						"value": "#2f8811"
+					}
+				]
+			}
+		}
+	},
+	"inputs": {
+		"input_global_trp": {
+			"type": "input.timerange",
+			"options": {
+				"token": "global_time",
+				"defaultValue": "-24h@h,now"
+			},
+			"title": "Global Time Range"
+		}
+	},
+	"layout": {
+		"type": "absolute",
+		"options": {
+			"display": "auto-scale"
+		},
+		"structure": [
+			{
+				"item": "viz_table_1",
+				"type": "block",
+				"position": {
+					"x": 0,
+					"y": 0,
+					"w": 1200,
+					"h": 500
+				}
+			}
+		],
+		"globalInputs": [
+			"input_global_trp"
+		]
+	},
+	"title": "Vserver Connection Status",
+	"defaults": {
+		"dataSources": {
+			"ds.search": {
+				"options": {
+					"queryParameters": {
+						"latest": "$global_time.latest$",
+						"earliest": "$global_time.earliest$"
+					}
+				}
+			}
+		}
+	}
+}

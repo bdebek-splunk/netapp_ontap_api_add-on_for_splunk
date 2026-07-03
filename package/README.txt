@@ -144,6 +144,16 @@ $SPLUNK_HOME/var/log/splunk/splunk_ta_netapp_ontap_*.log
 
 ---
 
+## Usage
+
+After Data Collection settings are saved, enabled inputs begin polling the selected ONTAP REST API endpoints on the configured interval and writing events to the selected Splunk index.
+
+Use **Configuration → Data Collection** to manage the data types collected for an account in bulk. Saving this tab keeps the generated modular inputs aligned with the selected account, index, interval, timeout, and collection checkboxes.
+
+Use the **Inputs** page to confirm that generated inputs are **Active** or to adjust an individual input when needed. Return to **Configuration → Data Collection** when you want to add or remove collected data types for an account.
+
+---
+
 ## Managing Inputs
 
 Inputs created by the Data Collection tab appear on the **Inputs** page. From there you can:

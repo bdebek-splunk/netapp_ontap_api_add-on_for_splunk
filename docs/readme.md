@@ -195,3 +195,8 @@ All events collected by this add-on use source types in the format `apiontap:<in
 | `apiontap:cluster_identity` | Cluster identity from `/api/cluster` |
 
 ---
+
+## Contributing
+See the [CONTRIBUTING.md](https://github.com/splunk-platform-apps/.github/blob/main/.github/CONTRIBUTING.md) file for details.
+
+---

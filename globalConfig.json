@@ -1,0 +1,809 @@
+{
+    "pages": {
+        "configuration": {
+            "tabs": [
+                {
+                    "name": "account",
+                    "restHandlerModule": "ontap_vserver_validator_rh",
+                    "restHandlerClass": "CustomAccountValidator",
+                    "table": {
+                        "actions": [
+                            "edit",
+                            "delete",
+                            "clone"
+                        ],
+                        "header": [
+                            {
+                                "label": "Name",
+                                "field": "name"
+                            },
+                            {
+                                "label": "Host",
+                                "field": "host"
+                            },
+                            {
+                                "label": "Username",
+                                "field": "username"
+                            },
+                            {
+                                "label": "Server Status",
+                                "field": "server_status"
+                            },
+                            {
+                                "label": "Status",
+                                "field": "disabled"
+                            }
+                        ]
+                    },
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "field": "name",
+                            "help": "A unique name for the account.",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "ONTAP Host",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "host",
+                            "help": "ONTAP service base URL",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "Username",
+                            "field": "username",
+                            "help": "Username",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "Password",
+                            "field": "password",
+                            "help": "Password",
+                            "required": true,
+                            "encrypted": true
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Verify Host Connections",
+                            "field": "verify_host",
+                            "defaultValue": true
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Verify TLS Certificates",
+                            "field": "verify_tls",
+                            "help": "Validate the ONTAP server TLS certificate when connecting.",
+                            "defaultValue": false
+                        },
+                        {
+                            "type": "text",
+                            "label": "Server Status",
+                            "field": "server_status",
+                            "help": "Server status",
+                            "defaultValue": "Unknown",
+                            "options": {
+                                "disableonEdit": true,
+                                "display": false
+                            }
+                        }
+                    ],
+                    "title": "Accounts"
+                },
+                {
+                    "name": "data_collection",
+                    "title": "Data Collection",
+                    "restHandlerModule": "ontap_data_collection_rh",
+                    "restHandlerClass": "DataCollectionHandler",
+                    "entity": [
+                        {
+                            "type": "singleSelect",
+                            "label": "Account",
+                            "field": "account",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Select the ONTAP account to collect data from.",
+                            "tooltip": "The account must be configured on the Accounts tab first.",
+                            "required": false
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Index",
+                            "field": "index",
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of index name should be between 1 to 80 characters.",
+                                    "minLength": 1,
+                                    "maxLength": 80
+                                }
+                            ],
+                            "required": true
+                        },
+                        {
+                            "type": "interval",
+                            "label": "Interval",
+                            "field": "interval",
+                            "defaultValue": "300",
+                            "options": {
+                                "range": [
+                                    10,
+                                    3600
+                                ]
+                            },
+                            "help": "Collection interval in seconds.",
+                            "required": true
+                        },
+                        {
+                            "type": "interval",
+                            "label": "Request Timeout",
+                            "field": "request_timeout",
+                            "defaultValue": "30",
+                            "options": {
+                                "range": [
+                                    1,
+                                    300
+                                ]
+                            },
+                            "help": "ONTAP REST request timeout in seconds.",
+                            "required": true
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Collect qtrees",
+                            "field": "collect_qtrees",
+                            "defaultValue": true,
+                            "help": "Enable collection of qtrees data."
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Collect aggregates",
+                            "field": "collect_aggregates",
+                            "defaultValue": true,
+                            "help": "Enable collection of aggregates data."
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Collect volumes",
+                            "field": "collect_volume",
+                            "defaultValue": true,
+                            "help": "Enable collection of volume data."
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Collect SVMs",
+                            "field": "collect_svms",
+                            "defaultValue": true,
+                            "help": "Enable collection of SVMs data."
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Collect cluster nodes",
+                            "field": "collect_cluster_nodes",
+                            "defaultValue": true,
+                            "help": "Enable collection of cluster nodes data."
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Collect cluster identity",
+                            "field": "collect_cluster_identity",
+                            "defaultValue": true,
+                            "help": "Enable collection of cluster identity data."
+                        }
+                    ]
+                },
+                {
+                    "type": "loggingTab"
+                }
+            ],
+            "title": "Configuration",
+            "description": "Set up your add-on"
+        },
+        "inputs": {
+            "services": [
+                {
+                    "name": "qtrees",
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                },
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "name",
+                            "help": "A unique name for the data input.",
+                            "required": true
+                        },
+                        {
+                            "type": "interval",
+                            "label": "Interval",
+                            "defaultValue": "300",
+                            "field": "interval",
+                            "options": {
+                                "range": [
+                                    10,
+                                    3600
+                                ]
+                            },
+                            "help": "Time interval of the data input, in seconds.",
+                            "required": true
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Account to use",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Account to use for this input.",
+                            "field": "account",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "Account Host",
+                            "field": "account_host",
+                            "required": false,
+                            "options": {
+                                "disableonEdit": true
+                            }
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Index",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of index name should be between 1 to 80 characters.",
+                                    "minLength": 1,
+                                    "maxLength": 80
+                                }
+                            ],
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "field": "index",
+                            "required": true
+                        }
+                    ],
+                    "inputHelperModule": "ontap_helper",
+                    "title": "qtrees",
+                    "hook": {
+                        "src": "account_hook",
+                        "type": "external"
+                    }
+                },
+                {
+                    "name": "aggregates",
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                },
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "name",
+                            "help": "A unique name for the data input.",
+                            "required": true
+                        },
+                        {
+                            "type": "interval",
+                            "label": "Interval",
+                            "defaultValue": "300",
+                            "field": "interval",
+                            "options": {
+                                "range": [
+                                    10,
+                                    3600
+                                ]
+                            },
+                            "help": "Time interval of the data input, in seconds.",
+                            "required": true
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Account to use",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Account to use for this input.",
+                            "field": "account",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "Account Host",
+                            "field": "account_host",
+                            "required": false,
+                            "options": {
+                                "disableonEdit": true
+                            }
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Index",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of index name should be between 1 to 80 characters.",
+                                    "minLength": 1,
+                                    "maxLength": 80
+                                }
+                            ],
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "field": "index",
+                            "required": true
+                        }
+                    ],
+                    "inputHelperModule": "ontap_helper",
+                    "title": "aggregates",
+                    "hook": {
+                        "src": "account_hook",
+                        "type": "external"
+                    }
+                },
+                {
+                    "name": "volume",
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                },
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "name",
+                            "help": "A unique name for the data input.",
+                            "required": true
+                        },
+                        {
+                            "type": "interval",
+                            "label": "Interval",
+                            "defaultValue": "300",
+                            "field": "interval",
+                            "options": {
+                                "range": [
+                                    10,
+                                    3600
+                                ]
+                            },
+                            "help": "Time interval of the data input, in seconds.",
+                            "required": true
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Account to use",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Account to use for this input.",
+                            "field": "account",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "Account Host",
+                            "field": "account_host",
+                            "required": false,
+                            "options": {
+                                "disableonEdit": true
+                            }
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Index",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of index name should be between 1 to 80 characters.",
+                                    "minLength": 1,
+                                    "maxLength": 80
+                                }
+                            ],
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "field": "index",
+                            "required": true
+                        }
+                    ],
+                    "inputHelperModule": "ontap_helper",
+                    "title": "volume",
+                    "hook": {
+                        "src": "account_hook",
+                        "type": "external"
+                    }
+                },
+                {
+                    "name": "svms",
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                },
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "name",
+                            "help": "A unique name for the data input.",
+                            "required": true
+                        },
+                        {
+                            "type": "interval",
+                            "label": "Interval",
+                            "defaultValue": "300",
+                            "field": "interval",
+                            "options": {
+                                "range": [
+                                    10,
+                                    3600
+                                ]
+                            },
+                            "help": "Time interval of the data input, in seconds.",
+                            "required": true
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Account to use",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Account to use for this input.",
+                            "field": "account",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "Account Host",
+                            "field": "account_host",
+                            "required": false,
+                            "options": {
+                                "disableonEdit": true
+                            }
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Index",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of index name should be between 1 to 80 characters.",
+                                    "minLength": 1,
+                                    "maxLength": 80
+                                }
+                            ],
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "field": "index",
+                            "required": true
+                        }
+                    ],
+                    "inputHelperModule": "ontap_helper",
+                    "title": "svms",
+                    "hook": {
+                        "src": "account_hook",
+                        "type": "external"
+                    }
+                },
+                {
+                    "name": "cluster_nodes",
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                },
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "name",
+                            "help": "A unique name for the data input.",
+                            "required": true
+                        },
+                        {
+                            "type": "interval",
+                            "label": "Interval",
+                            "defaultValue": "300",
+                            "field": "interval",
+                            "options": {
+                                "range": [
+                                    10,
+                                    3600
+                                ]
+                            },
+                            "help": "Time interval of the data input, in seconds.",
+                            "required": true
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Account to use",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Account to use for this input.",
+                            "field": "account",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "Account Host",
+                            "field": "account_host",
+                            "required": false,
+                            "options": {
+                                "disableonEdit": true
+                            }
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Index",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of index name should be between 1 to 80 characters.",
+                                    "minLength": 1,
+                                    "maxLength": 80
+                                }
+                            ],
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "field": "index",
+                            "required": true
+                        }
+                    ],
+                    "inputHelperModule": "ontap_helper",
+                    "title": "cluster_nodes",
+                    "hook": {
+                        "src": "account_hook",
+                        "type": "external"
+                    }
+                },
+                {
+                    "name": "cluster_identity",
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                },
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "name",
+                            "help": "A unique name for the data input.",
+                            "required": true
+                        },
+                        {
+                            "type": "interval",
+                            "label": "Interval",
+                            "defaultValue": "300",
+                            "field": "interval",
+                            "options": {
+                                "range": [
+                                    10,
+                                    3600
+                                ]
+                            },
+                            "help": "Time interval of the data input, in seconds.",
+                            "required": true
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Account to use",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Account to use for this input.",
+                            "field": "account",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "Account Host",
+                            "field": "account_host",
+                            "required": false,
+                            "options": {
+                                "disableonEdit": true
+                            }
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Index",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of index name should be between 1 to 80 characters.",
+                                    "minLength": 1,
+                                    "maxLength": 80
+                                }
+                            ],
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "field": "index",
+                            "required": true
+                        }
+                    ],
+                    "inputHelperModule": "ontap_helper",
+                    "title": "cluster_identity",
+                    "hook": {
+                        "src": "account_hook",
+                        "type": "external"
+                    }
+                }
+            ],
+            "title": "Inputs",
+            "description": "Manage your data inputs",
+            "table": {
+                "actions": [
+                    "edit",
+                    "delete",
+                    "clone"
+                ],
+                "header": [
+                    {
+                        "label": "Account",
+                        "field": "account"
+                    },
+                    {
+                        "label": "Name",
+                        "field": "name"
+                    },
+                    {
+                        "label": "Interval",
+                        "field": "interval"
+                    },
+                    {
+                        "label": "Status",
+                        "field": "disabled"
+                    }
+                ],
+                "moreInfo": [
+                    {
+                        "label": "Name",
+                        "field": "name"
+                    },
+                    {
+                        "label": "Interval",
+                        "field": "interval"
+                    },
+                    {
+                        "label": "Status",
+                        "field": "disabled",
+                        "mapping": {
+                            "true": "Inactive",
+                            "false": "Active"
+                        }
+                    },
+                    {
+                        "label": "Account",
+                        "field": "account"
+                    },
+                    {
+                        "label": "Account Host",
+                        "field": "account_host"
+                    },
+                    {
+                        "label": "Index",
+                        "field": "index"
+                    }
+                ]
+            }
+        },
+        "dashboard": {
+            "panels": [
+                {
+                    "name": "default"
+                },
+                {
+                    "name": "custom"
+                }
+            ],
+            "settings": {
+                "custom_tab_name": "Vservers connection status"
+            }
+        }
+    },
+    "meta": {
+        "name": "Splunk_TA_NetApp_ontap",
+        "restRoot": "Splunk_TA_NetApp_ontap",
+        "version": "1.0.0",
+        "displayName": "Splunk TA for NetApp ONTAP",
+        "schemaVersion": "0.0.10",
+        "supportedThemes": [
+            "light",
+            "dark"
+        ]
+    }
+}

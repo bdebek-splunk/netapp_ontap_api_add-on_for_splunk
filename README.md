@@ -1,4 +1,7 @@
-# netapp_ontap_api_add-on_for_splunk
+# NetApp ONTAP API Add-on for Splunk
+
+> [!IMPORTANT]
+> This Add-on leverages NetApp ONTAP REST APIs to collect data and it is currently **NOT** a full replacement of the [Splunk Add-on for NetApp Data ONTAP](https://splunkbase.splunk.com/app/3418).
 
 ## Getting Started
 

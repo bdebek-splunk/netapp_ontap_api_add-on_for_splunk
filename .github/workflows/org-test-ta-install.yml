@@ -18,6 +18,6 @@ permissions:
 
 jobs:
   call-workflow:
-    uses: splunk-platform-apps/.github/.github/workflows/reusable-test-ta-install.yml@v1
+    uses: splunk-platform-apps/.github/.github/workflows/reusable-test-ta-install.yml@v1.3.3
     with:
       addon_name: netapp_ontap_api_add-on_for_splunk

@@ -1,16 +1,8 @@
 # Splunk Add-on for NetApp ONTAP
 
-| | |
-|---|---|
-| **Version** | 1.0.0 |
-| **Vendor** | NetApp |
-| **Splunk platform** | Splunk Enterprise, Splunk Cloud Platform |
-| **Python version** | Python 3.9+ |
-| **License** | See [LICENSE](LICENSE) |
-
-## Overview
-
 The Splunk Add-on for NetApp ONTAP collects operational data from NetApp ONTAP clusters via the ONTAP REST API and indexes it in Splunk for monitoring, alerting, and analysis.
+
+## Features
 
 The following data types are supported:
 
@@ -23,7 +15,16 @@ The following data types are supported:
 | Cluster Nodes | `/api/cluster/nodes` | `apiontap:cluster_nodes` |
 | Cluster Identity | `/api/cluster` | `apiontap:cluster_identity` |
 
----
+### Source Types
+
+| Source type | Description |
+|---|---|
+| `apiontap:qtrees` | Qtree records from `/api/storage/qtrees` |
+| `apiontap:aggregates` | Aggregate records from `/api/storage/aggregates` |
+| `apiontap:volume` | Volume records from `/api/storage/volumes` |
+| `apiontap:svms` | SVM records from `/api/svm/svms` |
+| `apiontap:cluster_nodes` | Node records from `/api/cluster/nodes` |
+| `apiontap:cluster_identity` | Cluster identity from `/api/cluster` |
 
 ## Requirements
 
@@ -38,7 +39,7 @@ The following data types are supported:
 - A dedicated ONTAP user account with **read-only** access to the REST API (see [ONTAP user permissions](#ontap-user-permissions) below)
 - Network connectivity from the Splunk instance to the ONTAP management interface on port **443** (HTTPS)
 
-### ONTAP user permissions
+#### ONTAP user permissions
 
 The account used by this add-on requires the following minimum REST API access:
 
@@ -51,31 +52,30 @@ The account used by this add-on requires the following minimum REST API access:
 | `/api/cluster/nodes` | `readonly` |
 | `/api/cluster` | `readonly` |
 
-To create a dedicated read-only role and user in ONTAP CLI:
+To create a dedicated read-only role and user execute in the ONTAP CLI:
 
 ```shell
 security login role create -role splunk_readonly -cmddirname DEFAULT -access readonly
 security login create -user-or-group-name splunk_svc -application http -authmethod password -role splunk_readonly
 ```
 
----
-
 ## Installation
 
-1. Download the latest `.tar.gz` package from the [Releases](#) page.
+Splunk admins are requested to:
+
+1. Download the latest `.tar.gz` package from the [Releases](https://github.com/splunk-platform-apps/netapp_ontap_api_add-on_for_splunk/releases) page.
 2. In Splunk Web, go to **Apps → Manage Apps → Install app from file**.
 3. Upload the `.tar.gz` file and click **Upload**.
-4. Restart Splunk when prompted (or use `splunk restart` on the CLI).
+4. Restart Splunk when prompted (or use `splunk restart` in the CLI).
 
+>[!IMPORTANT]
 > **Distributed deployments:** Install the add-on on your heavy forwarder(s) for data collection. Install on search heads for field extractions and knowledge objects. No configuration is required on indexers.
-
----
 
 ## Configuration
 
 All configuration is done through the add-on's UI at **Apps → Splunk TA for NetApp ONTAP**.
 
-### Step 1 — Configure an Account
+### Step 1: Configure an Account
 
 An account stores the connection credentials for one ONTAP cluster.
 
@@ -97,9 +97,7 @@ An account stores the connection credentials for one ONTAP cluster.
 
 > You can configure multiple accounts — one per ONTAP cluster.
 
----
-
-### Step 2 — Configure Data Collection
+### Step 2: Configure Data Collection
 
 The Data Collection tab creates and enables the modular inputs for a given account.
 
@@ -130,9 +128,7 @@ The Data Collection tab creates and enables the modular inputs for a given accou
 
 > To collect from multiple ONTAP clusters, repeat Steps 1 and 2 for each cluster account.
 
----
-
-### Step 3 — (Optional) Adjust Logging
+### Step 3 (Optional): Adjust Logging
 
 1. Navigate to **Configuration → Logging**.
 2. Set the log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`). Default is `INFO`.
@@ -142,8 +138,6 @@ Add-on logs are written to:
 $SPLUNK_HOME/var/log/splunk/splunk_ta_netapp_ontap_*.log
 ```
 
----
-
 ## Usage
 
 After Data Collection settings are saved, enabled inputs begin polling the selected ONTAP REST API endpoints on the configured interval and writing events to the selected Splunk index.
@@ -152,9 +146,7 @@ Use **Configuration → Data Collection** to manage the data types collected for
 
 Use the **Inputs** page to confirm that generated inputs are **Active** or to adjust an individual input when needed. Return to **Configuration → Data Collection** when you want to add or remove collected data types for an account.
 
----
-
-## Managing Inputs
+### Managing Inputs
 
 Inputs created by the Data Collection tab appear on the **Inputs** page. From there you can:
 
@@ -163,11 +155,10 @@ Inputs created by the Data Collection tab appear on the **Inputs** page. From th
 - **Delete** an input to permanently remove it.
 - **Sort by Account** using the Account column header to group inputs by cluster.
 
-> **Note:** If you delete an account, all inputs associated with that account are automatically removed.
+>[!NOTE]
+> If you delete an account, all inputs associated with that account are automatically removed.
 
----
-
-## Searching Data
+### Search Data
 
 All events collected by this add-on use source types in the format `apiontap:<input_type>`.
 
@@ -179,8 +170,6 @@ All events collected by this add-on use source types in the format `apiontap:<in
 | index=default sourcetype="apiontap:cluster_identity"
 ```
 
----
-
 ## Troubleshooting
 
 | Symptom | Likely cause | Resolution |
@@ -191,22 +180,15 @@ All events collected by this add-on use source types in the format `apiontap:<in
 | Events not appearing in Splunk | Input is disabled or wrong index | Verify the input is **Active** on the Inputs page and check the index name |
 | `Error decrypting password` in logs | Credential store issue | Delete and re-create the account |
 
----
+## Versions Supported
 
-## Source Types
-
-| Source type | Description |
+| | |
 |---|---|
-| `apiontap:qtrees` | Qtree records from `/api/storage/qtrees` |
-| `apiontap:aggregates` | Aggregate records from `/api/storage/aggregates` |
-| `apiontap:volume` | Volume records from `/api/storage/volumes` |
-| `apiontap:svms` | SVM records from `/api/svm/svms` |
-| `apiontap:cluster_nodes` | Node records from `/api/cluster/nodes` |
-| `apiontap:cluster_identity` | Cluster identity from `/api/cluster` |
-
----
+| **Version** | 1.0.0 |
+| **Vendor** | NetApp |
+| **Splunk platform** | Splunk Enterprise, Splunk Cloud Platform |
+| **Python version** | Python 3.9+ |
+| **License** | See [LICENSE](LICENSE) |
 
 ## Contributing
 See the [CONTRIBUTING.md](https://github.com/splunk-platform-apps/.github/blob/main/.github/CONTRIBUTING.md) file for details.
-
----

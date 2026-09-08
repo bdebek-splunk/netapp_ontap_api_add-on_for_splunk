@@ -1,6 +1,6 @@
-# Splunk Add-on for NetApp ONTAP
+# Splunk Technology Add-on for NetApp ONTAP
 
-The Splunk Add-on for NetApp ONTAP collects operational data from NetApp ONTAP clusters via the ONTAP REST API and indexes it in Splunk for monitoring, alerting, and analysis.
+The Splunk Technology Add-on (TA) for NetApp ONTAP collects operational data from NetApp ONTAP clusters via the ONTAP REST API and indexes it in Splunk for monitoring, alerting, and analysis.
 
 ## Features
 

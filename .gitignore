@@ -76,3 +76,5 @@ package/appserver/static/js/build/custom/*
 
 # PyPI configuration file
 .pypirc
+plan.md
+research.md

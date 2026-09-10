@@ -101,28 +101,24 @@ An account stores the connection credentials for one ONTAP cluster.
 
 ### Step 2 — Configure Data Collection
 
-The Data Collection tab creates and enables the modular inputs for a given account.
+The Data Collection tab lists all collections and their metrics.
 
 1. Navigate to **Configuration → Data Collection**.
-2. Fill in the fields:
+2. Select **New Collection** and fill in the collection form:
 
    | Field | Description |
    |---|---|
+   | **Collection name** | Unique name for this collection on the selected account. Use letters, numbers, and underscores. |
    | **Account** | Select the account configured in Step 1. |
    | **Index** | Splunk index where collected events will be stored. Defaults to `default`. |
-   | **Interval** | How frequently to poll the ONTAP API, in seconds. Range: 10 – 3600. Default: `300`. |
+   | **Metric intervals** | Enable the metrics to collect and set an interval for each one. Range: 10 – 3600 seconds. |
    | **Request Timeout** | Maximum wait time for each ONTAP REST request, in seconds. Range: 1 – 300. Default: `30`. |
-   | **Collect qtrees** | Enable/disable collection of qtree data. |
-   | **Collect aggregates** | Enable/disable collection of aggregate data. |
-   | **Collect volumes** | Enable/disable collection of volume data. |
-   | **Collect SVMs** | Enable/disable collection of SVM (Storage Virtual Machine) data. |
-   | **Collect cluster nodes** | Enable/disable collection of cluster node data. |
-   | **Collect cluster identity** | Enable/disable collection of cluster-level identity data. |
+   | **Metrics** | Enable/disable qtrees, aggregates, volumes, SVMs, cluster nodes, or cluster identity. |
 
-3. Click **Save**.
+3. Click **Save Collection**. Use **Edit** in the collections table to change an existing collection.
 
    Saving will automatically:
-   - **Create** a new modular input for each enabled data type (named `<account>_<type>`, e.g. `prod_cluster_01_qtrees`).
+   - **Create** a new modular input for each enabled data type (named `<account>_<collection>_<type>`; legacy collections use `<account>_<type>`).
    - **Enable** inputs for checked data types.
    - **Disable** inputs for unchecked data types.
 
@@ -148,7 +144,7 @@ $SPLUNK_HOME/var/log/splunk/splunk_ta_netapp_ontap_*.log
 
 After Data Collection settings are saved, enabled inputs begin polling the selected ONTAP REST API endpoints on the configured interval and writing events to the selected Splunk index.
 
-Use **Configuration → Data Collection** to manage the data types collected for an account in bulk. Saving this tab keeps the generated modular inputs aligned with the selected account, index, interval, timeout, and collection checkboxes.
+Use **Configuration → Data Collection** to view all created collections. Select **New Collection** to add an ONTAP account, choose its metrics, and set an independent interval for each metric. Existing collections can be edited from the table.
 
 Use the **Inputs** page to confirm that generated inputs are **Active** or to adjust an individual input when needed. Return to **Configuration → Data Collection** when you want to add or remove collected data types for an account.
 
@@ -159,7 +155,7 @@ Use the **Inputs** page to confirm that generated inputs are **Active** or to ad
 Inputs created by the Data Collection tab appear on the **Inputs** page. From there you can:
 
 - **Enable / Disable** individual inputs using the toggle in the Status column.
-- **Edit** an input to change its index or interval independently.
+- **Edit** a collection to change its index, enabled metrics, or each metric's interval independently.
 - **Delete** an input to permanently remove it.
 - **Sort by Account** using the Account column header to group inputs by cluster.
 

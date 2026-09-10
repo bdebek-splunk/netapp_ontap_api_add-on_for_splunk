@@ -17,6 +17,13 @@ _, _default_stanza = _build_maps()
 
 fields_data_collection = [
     field.RestField(
+        "collection_name",
+        required=False,
+        encrypted=False,
+        default="",
+        validator=validator.Pattern(regex=r"^[A-Za-z][A-Za-z0-9_]*$"),
+    ),
+    field.RestField(
         "account", required=False, encrypted=False, default=None, validator=None
     ),
     field.RestField(
@@ -54,6 +61,16 @@ for _field_key in _default_stanza:
                 encrypted=False,
                 default=True,
                 validator=None,
+            )
+        )
+    elif _field_key.startswith("interval_"):
+        fields_data_collection.append(
+            field.RestField(
+                _field_key,
+                required=False,
+                encrypted=False,
+                default="300",
+                validator=validator.Number(max_val=3600, min_val=10),
             )
         )
 

@@ -8,6 +8,7 @@ import urllib.parse
 import logging
 import json
 import os
+import re
 from typing import Any
 
 ADDON_NAME = "Splunk_TA_NetApp_ontap"
@@ -32,6 +33,7 @@ def _build_maps():
     """
     field_map = {}
     default_stanza = {
+        "collection_name": "",
         "account": "",
         "index": "default",
         "interval": "300",
@@ -48,6 +50,7 @@ def _build_maps():
             field_key = f"collect_{name}"
             field_map[field_key] = name
             default_stanza[field_key] = "1"
+            default_stanza[f"interval_{name}"] = "300"
     except Exception as e:
         logger.warning(
             f"Could not build maps from globalConfig.json: {e}. Falling back to empty map."
@@ -69,9 +72,12 @@ def _eai_path(input_type, name=None, action=None):
     return base
 
 
-def _input_name_for(account: str, kind: str) -> str:
-    """Unique input stanza name: <account>_<kind>, e.g. mycluster_qtrees."""
-    return f"{account}_{kind}"
+def _input_name_for(account: str, kind: str, collection_name: str = "") -> str:
+    """Build a unique input name while preserving legacy collection names."""
+    collection_name = (collection_name or account).strip()
+    if collection_name == account:
+        return f"{account}_{kind}"
+    return f"{account}_{collection_name}_{kind}"
 
 
 def _short_input_name(name):
@@ -165,7 +171,7 @@ def _set_input_state(session_key, endpoint, name, enable: bool):
 
 
 def _sync_inputs_for_account(
-    session_key, account, index, interval, stanza_info, _logger
+    session_key, account, collection_name, index, interval, stanza_info, _logger
 ):
     if not INPUT_FIELD_MAP:
         raise Exception(
@@ -174,7 +180,8 @@ def _sync_inputs_for_account(
     failures = []
     for field, input_type in INPUT_FIELD_MAP.items():
         enabled = str(stanza_info.get(field, "1")).strip() in ("1", "true", "True")
-        input_name = _input_name_for(account, input_type)
+        metric_interval = stanza_info.get(f"interval_{input_type}", interval)
+        input_name = _input_name_for(account, input_type, collection_name)
         _logger.debug(f"Syncing {input_type}: enabled={enabled}, name={input_name}")
 
         try:
@@ -190,7 +197,12 @@ def _sync_inputs_for_account(
             if input_name not in existing:
                 try:
                     _create_input(
-                        session_key, input_type, input_name, account, index, interval
+                        session_key,
+                        input_type,
+                        input_name,
+                        account,
+                        index,
+                        metric_interval,
                     )
                     _logger.info(f"Created and enabled {input_type}://{input_name}.")
                 except Exception as e:
@@ -200,7 +212,12 @@ def _sync_inputs_for_account(
             else:
                 try:
                     _update_input(
-                        session_key, input_type, input_name, account, index, interval
+                        session_key,
+                        input_type,
+                        input_name,
+                        account,
+                        index,
+                        metric_interval,
                     )
                     content = existing[input_name].get("content", {})
                     disabled = str(content.get("disabled", "0")) in (
@@ -251,6 +268,7 @@ def _normalize_data_collection_payload(payload):
                 stanza_info[key] = value
 
     account = (stanza_info.get("account") or "").strip()
+    collection_name = (stanza_info.get("collection_name") or account).strip()
     index = (stanza_info.get("index") or "default").strip()
     interval = _coerce_int(stanza_info.get("interval"), "300", 10, 3600, "Interval")
     request_timeout = _coerce_int(
@@ -264,12 +282,28 @@ def _normalize_data_collection_payload(payload):
         raise RestError(
             400, "Account must be selected before saving Data Collection settings."
         )
+    if not collection_name:
+        raise RestError(400, "Collection name must be provided.")
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", collection_name):
+        raise RestError(
+            400,
+            "Collection name must begin with a letter and contain only letters, numbers, and underscores.",
+        )
 
     stanza_info["account"] = account
+    stanza_info["collection_name"] = collection_name
     stanza_info["index"] = index
     stanza_info["interval"] = interval
     stanza_info["request_timeout"] = request_timeout
-    return account, index, interval, stanza_info
+    for input_type in INPUT_FIELD_MAP.values():
+        stanza_info[f"interval_{input_type}"] = _coerce_int(
+            stanza_info.get(f"interval_{input_type}"),
+            interval,
+            10,
+            3600,
+            f"Interval for {input_type}",
+        )
+    return account, collection_name, index, interval, stanza_info
 
 
 class DataCollectionHandler(AdminExternalHandler):
@@ -316,11 +350,24 @@ class DataCollectionHandler(AdminExternalHandler):
     def handleEdit(self, confInfo) -> Any:
         _logger = self._get_logger()
         _logger.info("handleEdit called for DataCollectionHandler")
+        payload = self.payload or {}
+        # The settings endpoint uses this handler for both data_collection and
+        # logging models. Logging edits must keep the standard UCC behavior and
+        # must not attempt to create or synchronize metric inputs.
+        if (
+            "loglevel" in payload
+            and "account" not in payload
+            and "collection_name" not in payload
+        ):
+            return AdminExternalHandler.handleEdit(self, confInfo)
         try:
-            payload = self.payload or {}
-            account, index, interval, stanza_info = _normalize_data_collection_payload(
-                payload
-            )
+            (
+                account,
+                collection_name,
+                index,
+                interval,
+                stanza_info,
+            ) = _normalize_data_collection_payload(payload)
             payload.update(stanza_info)
             self.payload = payload
         except RestError:
@@ -334,10 +381,16 @@ class DataCollectionHandler(AdminExternalHandler):
         session_key = self.getSessionKey()
         try:
             _logger.info(
-                f"handleEdit: account={account}, index={index}, interval={interval}, stanza={dict(stanza_info)}"
+                f"handleEdit: account={account}, collection={collection_name}, index={index}, interval={interval}, stanza={dict(stanza_info)}"
             )
             _sync_inputs_for_account(
-                session_key, account, index, interval, stanza_info, _logger
+                session_key,
+                account,
+                collection_name,
+                index,
+                interval,
+                stanza_info,
+                _logger,
             )
         except RestError:
             raise

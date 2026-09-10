@@ -69,6 +69,10 @@ yarn-error.log*
 .cache-loader
 
 build/
+!package/appserver/static/js/build/
+!package/appserver/static/js/build/custom/
+package/appserver/static/js/build/custom/*
+!package/appserver/static/js/build/custom/data_collection_tab.js
 
 # PyPI configuration file
 .pypirc

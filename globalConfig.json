@@ -103,111 +103,10 @@
                 {
                     "name": "data_collection",
                     "title": "Data Collection",
-                    "restHandlerModule": "ontap_data_collection_rh",
-                    "restHandlerClass": "DataCollectionHandler",
-                    "entity": [
-                        {
-                            "type": "singleSelect",
-                            "label": "Account",
-                            "field": "account",
-                            "options": {
-                                "referenceName": "account"
-                            },
-                            "help": "Select the ONTAP account to collect data from.",
-                            "tooltip": "The account must be configured on the Accounts tab first.",
-                            "required": false
-                        },
-                        {
-                            "type": "singleSelect",
-                            "label": "Index",
-                            "field": "index",
-                            "defaultValue": "default",
-                            "options": {
-                                "endpointUrl": "data/indexes",
-                                "denyList": "^_.*$",
-                                "createSearchChoice": true
-                            },
-                            "validators": [
-                                {
-                                    "type": "string",
-                                    "errorMsg": "Length of index name should be between 1 to 80 characters.",
-                                    "minLength": 1,
-                                    "maxLength": 80
-                                }
-                            ],
-                            "required": true
-                        },
-                        {
-                            "type": "interval",
-                            "label": "Interval",
-                            "field": "interval",
-                            "defaultValue": "300",
-                            "options": {
-                                "range": [
-                                    10,
-                                    3600
-                                ]
-                            },
-                            "help": "Collection interval in seconds.",
-                            "required": true
-                        },
-                        {
-                            "type": "interval",
-                            "label": "Request Timeout",
-                            "field": "request_timeout",
-                            "defaultValue": "30",
-                            "options": {
-                                "range": [
-                                    1,
-                                    300
-                                ]
-                            },
-                            "help": "ONTAP REST request timeout in seconds.",
-                            "required": true
-                        },
-                        {
-                            "type": "checkbox",
-                            "label": "Collect qtrees",
-                            "field": "collect_qtrees",
-                            "defaultValue": true,
-                            "help": "Enable collection of qtrees data."
-                        },
-                        {
-                            "type": "checkbox",
-                            "label": "Collect aggregates",
-                            "field": "collect_aggregates",
-                            "defaultValue": true,
-                            "help": "Enable collection of aggregates data."
-                        },
-                        {
-                            "type": "checkbox",
-                            "label": "Collect volumes",
-                            "field": "collect_volume",
-                            "defaultValue": true,
-                            "help": "Enable collection of volume data."
-                        },
-                        {
-                            "type": "checkbox",
-                            "label": "Collect SVMs",
-                            "field": "collect_svms",
-                            "defaultValue": true,
-                            "help": "Enable collection of SVMs data."
-                        },
-                        {
-                            "type": "checkbox",
-                            "label": "Collect cluster nodes",
-                            "field": "collect_cluster_nodes",
-                            "defaultValue": true,
-                            "help": "Enable collection of cluster nodes data."
-                        },
-                        {
-                            "type": "checkbox",
-                            "label": "Collect cluster identity",
-                            "field": "collect_cluster_identity",
-                            "defaultValue": true,
-                            "help": "Enable collection of cluster identity data."
-                        }
-                    ]
+                    "customTab": {
+                        "src": "data_collection_tab",
+                        "type": "external"
+                    }
                 },
                 {
                     "type": "loggingTab"
@@ -798,7 +697,7 @@
     "meta": {
         "name": "Splunk_TA_NetApp_ontap",
         "restRoot": "Splunk_TA_NetApp_ontap",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "displayName": "Splunk TA for NetApp ONTAP",
         "schemaVersion": "0.0.10",
         "supportedThemes": [

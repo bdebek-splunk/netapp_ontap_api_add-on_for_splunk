@@ -1,0 +1,18 @@
+{
+  "name": "netapp-ontap-data-collection-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@splunk/react-ui": "5.2.0",
+    "@splunk/themes": "1.2.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "styled-components": "5.3.11"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.9"
+  }
+}

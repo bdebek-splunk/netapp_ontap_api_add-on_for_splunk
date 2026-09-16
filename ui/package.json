@@ -1,11 +1,12 @@
 {
-  "name": "netapp-ontap-data-collection-ui",
+  "name": "splunk-ta-netapp-ontap-ucc-ui",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node build.mjs"
   },
   "dependencies": {
+    "@splunk/add-on-ucc-framework": "6.0.1",
     "@splunk/react-ui": "5.2.0",
     "@splunk/themes": "1.2.0",
     "react": "18.3.1",
@@ -13,6 +14,12 @@
     "styled-components": "5.3.11"
   },
   "devDependencies": {
-    "esbuild": "0.25.9"
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "typescript": "5.9.2"
+  },
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
   }
 }

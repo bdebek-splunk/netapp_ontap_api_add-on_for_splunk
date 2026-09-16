@@ -72,9 +72,11 @@ build/
 !package/appserver/static/js/build/
 !package/appserver/static/js/build/custom/
 package/appserver/static/js/build/custom/*
-!package/appserver/static/js/build/custom/data_collection_tab.js
+!package/appserver/static/js/build/custom/account_hook.js
+!package/appserver/static/js/build/custom/custom_connection_cell.js
 
 # PyPI configuration file
 .pypirc
 plan.md
 research.md
+temp/

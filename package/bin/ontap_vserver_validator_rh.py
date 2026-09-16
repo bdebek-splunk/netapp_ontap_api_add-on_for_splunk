@@ -25,8 +25,8 @@ INPUT_KINDS = list(API_MAPPER.keys())
 
 
 def _eai_url(kind, name=None):
-    """Build the EAI endpoint URL for a given input kind."""
-    base = f"{SPLUNK_BASE}/servicesNS/nobody/{ADDON_NAME}/data/inputs/{kind}"
+    """Build the generated UCC input endpoint URL for a given input kind."""
+    base = f"{SPLUNK_BASE}/servicesNS/nobody/{ADDON_NAME}/{ADDON_NAME}_{kind}"
     return f"{base}/{urllib.parse.quote(name, safe='')}" if name else base
 
 

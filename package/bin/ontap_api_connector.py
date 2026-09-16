@@ -22,6 +22,14 @@ API_MAPPER = {
         "fields": "*",
     },
     "cluster_identity": {"endpoint": "/api/cluster", "dataset": "", "fields": "*"},
+    # The performance input uses ontap_perf_collection for table discovery and
+    # row sampling. Keeping a mapper entry lets shared input validation know
+    # that perf is a supported input without changing the inventory contract.
+    "perf": {
+        "endpoint": "/api/cluster/counter/tables",
+        "dataset": "records",
+        "fields": "name,description,counter_schemas",
+    },
 }
 
 
@@ -91,6 +99,34 @@ class OntapConnector:
         if endpoint_or_href.startswith("/"):
             return f"{self.base_url}{endpoint_or_href}"
         return f"{self.base_url}/{endpoint_or_href}"
+
+    def request_json(
+        self,
+        username: str,
+        password: str,
+        endpoint_or_href: str,
+        params: Any = None,
+    ) -> Dict[str, Any]:
+        """Request a JSON object for non-inventory REST endpoints.
+
+        Performance counter rows have a different response contract from the
+        ordinary inventory datasets, so the performance collector uses this
+        shared authenticated request path without changing get_data_from_api.
+        """
+        url = self._build_url(endpoint_or_href)
+        response = requests.get(
+            url,
+            auth=(username, password),
+            headers={"Accept": "application/json"},
+            params=params,
+            verify=self.verify_ssl,
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        response_json = response.json()
+        if not isinstance(response_json, dict):
+            raise ValueError(f"Expected a JSON object from ONTAP endpoint {url}")
+        return response_json
 
     def _get_next_href(self, response_json: Any) -> str:
         if not isinstance(response_json, dict):

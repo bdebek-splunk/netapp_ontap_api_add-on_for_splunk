@@ -1,11 +1,15 @@
+import hashlib
 import json
 import logging
+import os
+import tempfile
 
 import import_declare_test  # noqa: F401
 from solnlib import conf_manager, log
 from splunklib import modularinput as smi
 
 from ontap_api_connector import OntapConnector
+from ontap_perf_collection import OntapPerfRestCollector
 
 
 ADDON_NAME = "Splunk_TA_NetApp_ontap"
@@ -78,6 +82,43 @@ def validate_input(definition):
     return
 
 
+def _perf_state_path(input_name: str) -> str:
+    """Return a deterministic state path without placing credentials on disk."""
+    splunk_home = os.environ.get("SPLUNK_HOME")
+    if not splunk_home:
+        raise RuntimeError("SPLUNK_HOME is required for performance sample state")
+    state_dir = os.path.join(splunk_home, "var", "lib", "splunk", ADDON_NAME, "perf")
+    os.makedirs(state_dir, exist_ok=True)
+    state_key = hashlib.sha256(input_name.encode("utf-8")).hexdigest()[:24]
+    return os.path.join(state_dir, f"{state_key}.json")
+
+
+def _load_perf_samples(path: str):
+    try:
+        with open(path, "r", encoding="utf-8") as state_file:
+            payload = json.load(state_file)
+        samples = payload.get("samples", {})
+        return samples if isinstance(samples, dict) else {}
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
+def _save_perf_samples(path: str, samples):
+    """Atomically save bounded numeric samples; never save connection details."""
+    state_dir = os.path.dirname(path)
+    os.makedirs(state_dir, exist_ok=True)
+    state_fd, temporary_path = tempfile.mkstemp(
+        prefix=".perf-", suffix=".tmp", dir=state_dir
+    )
+    try:
+        with os.fdopen(state_fd, "w", encoding="utf-8") as state_file:
+            json.dump({"samples": samples}, state_file, ensure_ascii=False)
+        os.replace(temporary_path, path)
+    finally:
+        if os.path.exists(temporary_path):
+            os.unlink(temporary_path)
+
+
 def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
     # inputs.inputs is a Python dictionary object like:
     # {
@@ -112,15 +153,35 @@ def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
             username, password = get_account_credentials(session_key, account_name)
             verify_ssl = get_verify_ssl(session_key, account_name)
             request_timeout = get_request_timeout(session_key, logger)
-            # Initialize OntapConnector object
-            oc = OntapConnector(
-                base_url,
-                logger,
-                normalized_input_name,
-                verify_ssl=verify_ssl,
-                timeout=request_timeout,
-            )
-            data = oc.get_data_from_api(username, password)
+            if normalized_input_name == "perf":
+                state_path = _perf_state_path(input_name)
+                prior_samples = _load_perf_samples(state_path)
+                collector = OntapPerfRestCollector(
+                    base_url,
+                    username,
+                    password,
+                    verify_ssl,
+                    request_timeout,
+                    logger,
+                    account=account_name,
+                )
+                data, next_samples, skipped_tables = collector.collect(prior_samples)
+                _save_perf_samples(state_path, next_samples)
+                if skipped_tables:
+                    logger.info(
+                        "Skipped unavailable ONTAP performance objects: %s",
+                        ", ".join(skipped_tables),
+                    )
+            else:
+                # Keep the existing inventory input contract unchanged.
+                oc = OntapConnector(
+                    base_url,
+                    logger,
+                    normalized_input_name,
+                    verify_ssl=verify_ssl,
+                    timeout=request_timeout,
+                )
+                data = oc.get_data_from_api(username, password)
             if data is not None:
                 for line in data:
                     event_writer.write_event(

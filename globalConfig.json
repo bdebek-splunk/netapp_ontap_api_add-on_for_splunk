@@ -620,6 +620,90 @@
                         "src": "account_hook",
                         "type": "external"
                     }
+                },
+                {
+                    "name": "perf",
+                    "entity": [
+                        {
+                            "type": "text",
+                            "label": "Name",
+                            "validators": [
+                                {
+                                    "type": "regex",
+                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
+                                },
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of input name should be between 1 and 100",
+                                    "minLength": 1,
+                                    "maxLength": 100
+                                }
+                            ],
+                            "field": "name",
+                            "help": "A unique name for the performance data input.",
+                            "required": true
+                        },
+                        {
+                            "type": "interval",
+                            "label": "Interval",
+                            "defaultValue": "300",
+                            "field": "interval",
+                            "options": {
+                                "range": [
+                                    10,
+                                    3600
+                                ]
+                            },
+                            "help": "Time interval of the performance input, in seconds.",
+                            "required": true
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Account to use",
+                            "options": {
+                                "referenceName": "account"
+                            },
+                            "help": "Account to use for this input.",
+                            "field": "account",
+                            "required": true
+                        },
+                        {
+                            "type": "text",
+                            "label": "Account Host",
+                            "field": "account_host",
+                            "required": false,
+                            "options": {
+                                "disableonEdit": true
+                            }
+                        },
+                        {
+                            "type": "singleSelect",
+                            "label": "Index",
+                            "validators": [
+                                {
+                                    "type": "string",
+                                    "errorMsg": "Length of index name should be between 1 to 80 characters.",
+                                    "minLength": 1,
+                                    "maxLength": 80
+                                }
+                            ],
+                            "defaultValue": "default",
+                            "options": {
+                                "endpointUrl": "data/indexes",
+                                "denyList": "^_.*$",
+                                "createSearchChoice": true
+                            },
+                            "field": "index",
+                            "required": true
+                        }
+                    ],
+                    "inputHelperModule": "ontap_helper",
+                    "title": "perf",
+                    "hook": {
+                        "src": "account_hook",
+                        "type": "external"
+                    }
                 }
             ],
             "title": "Inputs",
@@ -697,7 +781,7 @@
     "meta": {
         "name": "Splunk_TA_NetApp_ontap",
         "restRoot": "Splunk_TA_NetApp_ontap",
-        "version": "1.1.0",
+        "version": "1.1.4",
         "displayName": "Splunk TA for NetApp ONTAP",
         "schemaVersion": "0.0.10",
         "supportedThemes": [

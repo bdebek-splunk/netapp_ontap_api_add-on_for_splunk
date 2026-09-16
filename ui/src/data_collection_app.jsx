@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
 import * as ButtonModule from "@splunk/react-ui/Button";
 import * as ComboBoxModule from "@splunk/react-ui/ComboBox";
 import * as MessageModule from "@splunk/react-ui/Message";
@@ -7,8 +6,8 @@ import * as WaitSpinnerModule from "@splunk/react-ui/WaitSpinner";
 import { SplunkThemeProvider, pick, variables } from "@splunk/themes";
 import * as styledComponents from "styled-components";
 
-// esbuild can expose a CommonJS dependency as either the module namespace or
-// its nested default export, depending on the browser bundle boundary.
+// Splunk UI dependencies can expose CommonJS modules as either the namespace
+// or a nested default export, depending on the UCC bundle boundary.
 const styledModule = styledComponents.default || styledComponents;
 const styled = styledModule.default || styledModule;
 
@@ -33,7 +32,13 @@ const METRICS = [
   "svms",
   "cluster_nodes",
   "cluster_identity",
-].map((name) => ({ name, label: name.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) }));
+  "perf",
+].map((name) => ({
+  name,
+  label: name === "perf"
+    ? "Performance"
+    : name.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()),
+}));
 
 function makeSplunkUrl(path) {
   if (window.Splunk?.util?.make_url) return window.Splunk.util.make_url(path);
@@ -183,7 +188,14 @@ async function loadCollectionData() {
     // the collection form to load without this response.
     apiFetch(makeSplunkUrl("/splunkd/__raw/services/data/indexes?output_mode=json&count=0&search=isInternal%3D0")).catch(() => ({ entry: [] })),
     apiFetch(makeSplunkUrl(`/splunkd/__raw/servicesNS/nobody/${ADDON}/${ADDON}_settings/${SETTINGS_STANZA}?output_mode=json`)).catch(() => ({ entry: [] })),
-    ...METRICS.map((metric) => apiFetch(`${inputUrl(metric.name)}?output_mode=json&count=0`)),
+    ...METRICS.map((metric) => apiFetch(`${inputUrl(metric.name)}?output_mode=json&count=0`).catch((inputError) => {
+      // Performance inputs may not exist yet on an installation upgraded from
+      // a package that predates the performance collector. Keep the rest of
+      // the collection page usable while treating that metric as empty.
+      if (!isMissingInputError(inputError)) throw inputError;
+      console.warn(`Could not load ${metric.label} inputs; treating it as empty.`, inputError);
+      return { entry: [] };
+    })),
   ]);
   const accountList = (accounts.entry || []).map((entry) => ({ name: entry.name, host: entry.content?.host || "" }));
   const indexList = (indexes.entry || []).map((entry) => entry.name).filter((name) => !/^_/.test(name));
@@ -500,7 +512,7 @@ const DialogFooter = styled("div")`
   background: ${pick({ enterprise: variables.backgroundColor, prisma: variables.backgroundColorDialog })};
 `;
 
-function ThemeShell({ children }) {
+export function ThemeShell({ children }) {
   const colorScheme = useInstanceColorScheme();
   return (
     <SplunkThemeProvider family="enterprise" density="comfortable" colorScheme={colorScheme}>
@@ -663,7 +675,7 @@ function CollectionModal({ form, accounts, indexes, isEdit, saving, onChange, on
   );
 }
 
-function DataCollectionApp() {
+export function DataCollectionApp() {
   const [accounts, setAccounts] = useState([]);
   const [indexes, setIndexes] = useState(["default"]);
   const [settings, setSettings] = useState({});
@@ -831,18 +843,3 @@ function DataCollectionApp() {
     </AppShell>
   );
 }
-
-class DataCollectionTab {
-  constructor(tab, element) {
-    this.tab = tab;
-    this.element = element;
-    this.root = null;
-  }
-
-  render() {
-    this.root = createRoot(this.element);
-    this.root.render(<ThemeShell><DataCollectionApp /></ThemeShell>);
-  }
-}
-
-export default DataCollectionTab;

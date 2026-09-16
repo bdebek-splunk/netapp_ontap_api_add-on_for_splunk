@@ -22,6 +22,7 @@ The following data types are supported:
 | SVMs | `/api/svm/svms` | `apiontap:svms` |
 | Cluster Nodes | `/api/cluster/nodes` | `apiontap:cluster_nodes` |
 | Cluster Identity | `/api/cluster` | `apiontap:cluster_identity` |
+| Performance | `/api/cluster/counter/tables` | `apiontap:perf` |
 
 ---
 
@@ -34,7 +35,7 @@ The following data types are supported:
 
 ### NetApp ONTAP
 
-- ONTAP 9.6 or later (REST API support required)
+- ONTAP 9.6 or later for inventory data; ONTAP 9.11 or later for performance data
 - A dedicated ONTAP user account with **read-only** access to the REST API (see [ONTAP user permissions](#ontap-user-permissions) below)
 - Network connectivity from the Splunk instance to the ONTAP management interface on port **443** (HTTPS)
 
@@ -50,6 +51,7 @@ The account used by this add-on requires the following minimum REST API access:
 | `/api/svm/svms` | `readonly` |
 | `/api/cluster/nodes` | `readonly` |
 | `/api/cluster` | `readonly` |
+| `/api/cluster/counter/tables` and `/rows` | `readonly` |
 
 To create a dedicated read-only role and user in ONTAP CLI:
 
@@ -113,12 +115,12 @@ The Data Collection tab lists all collections and their metrics.
    | **Index** | Splunk index where collected events will be stored. Defaults to `default`. |
    | **Metric intervals** | Enable the metrics to collect and set an interval for each one. Range: 10 – 3600 seconds. |
    | **Request Timeout** | Maximum wait time for each ONTAP REST request, in seconds. Range: 1 – 300. Default: `30`. |
-   | **Metrics** | Enable/disable qtrees, aggregates, volumes, SVMs, cluster nodes, or cluster identity. |
+   | **Metrics** | Enable/disable qtrees, aggregates, volumes, SVMs, cluster nodes, cluster identity, or performance. |
 
 3. Click **Save Collection**. Use **Edit** in the collections table to change an existing collection.
 
    Saving will automatically:
-   - **Create** a new modular input for each enabled data type (named `<account>_<collection>_<type>`; legacy collections use `<account>_<type>`).
+   - **Create** a new modular input for each enabled inventory data type and one performance input (named `<account>_<collection>_<type>`; legacy collections use `<account>_<type>`).
    - **Enable** inputs for checked data types.
    - **Disable** inputs for unchecked data types.
 

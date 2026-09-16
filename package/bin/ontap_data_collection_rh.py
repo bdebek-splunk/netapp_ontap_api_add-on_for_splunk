@@ -63,8 +63,11 @@ INPUT_FIELD_MAP, DEFAULT_STANZA = _build_maps()
 
 
 def _eai_path(input_type, name=None, action=None):
-    """Build the EAI REST path (no host) for use with splunk.rest.simpleRequest."""
-    base = f"/servicesNS/nobody/{ADDON_NAME}/data/inputs/{input_type}"
+    """Build the generated UCC input REST path for splunk.rest.simpleRequest."""
+    # UCC registers each modular input as an admin_external endpoint named
+    # ``<app>_<input_type>``. The older /data/inputs/<input_type> path is not
+    # routed by this app and returns 404 when used for create/update/list.
+    base = f"/servicesNS/nobody/{ADDON_NAME}/{ADDON_NAME}_{input_type}"
     if name:
         base = f"{base}/{urllib.parse.quote(name, safe='')}"
     if action:

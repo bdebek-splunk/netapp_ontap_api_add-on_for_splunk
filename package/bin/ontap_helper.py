@@ -9,7 +9,7 @@ from solnlib import conf_manager, log
 from splunklib import modularinput as smi
 
 from ontap_api_connector import OntapConnector
-from ontap_perf_collection import OntapPerfRestCollector
+from ontap_perf_collection import PERF_HANDLER_SOURCES, OntapPerfRestCollector
 
 
 ADDON_NAME = "Splunk_TA_NetApp_ontap"
@@ -184,11 +184,18 @@ def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
                 data = oc.get_data_from_api(username, password)
             if data is not None:
                 for line in data:
+                    event_metadata = {}
+                    if normalized_input_name == "perf":
+                        event_metadata = {
+                            "host": base_url,
+                            "source": PERF_HANDLER_SOURCES.get(line.get("object")),
+                        }
                     event_writer.write_event(
                         smi.Event(
                             data=json.dumps(line, ensure_ascii=False, default=str),
                             index=index_name,
                             sourcetype=sourcetype,
+                            **event_metadata,
                         )
                     )
                 log.events_ingested(

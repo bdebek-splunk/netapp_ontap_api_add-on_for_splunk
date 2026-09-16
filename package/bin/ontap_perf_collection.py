@@ -1,9 +1,4 @@
-"""ONTAP REST counter-table performance collection.
-
-This module is intentionally isolated in ``temp/perf_draft``. It replaces the
-old ONTAPI/XML performance path with the REST counter-table and counter-row
-endpoints while retaining compatible derived rate/delta field names.
-"""
+"""ONTAP REST counter-table performance collection."""
 
 from __future__ import annotations
 
@@ -18,6 +13,10 @@ from ontap_api_connector import OntapConnector
 COUNTER_TABLES_ENDPOINT = "/api/cluster/counter/tables"
 DEFAULT_MAX_RECORDS = 1000
 MAX_SAMPLE_VALUES = 50000
+
+PERF_HANDLER_SOURCES = {
+    "volume": "VolumePerfHandler",
+}
 
 # The REST catalog is authoritative. These aliases only identify the legacy
 # objects we want to carry forward; absent objects are skipped per table.
@@ -101,6 +100,20 @@ def _property_values(row: Mapping[str, Any]) -> Dict[str, Any]:
         name = str(prop["name"]).replace(".", "_")
         values[name] = prop["value"]
     return values
+
+
+def _add_volume_legacy_fields(event: Dict[str, Any]) -> None:
+    """Add the volume fields used by searches from the legacy performance TA."""
+    aliases = {
+        "instance_name": "name",
+        "instance_uuid": "uuid",
+        "vserver_name": "svm_name",
+        "avg_latency_average": "average_latency_average",
+    }
+    for legacy_name, rest_name in aliases.items():
+        value = event.get(rest_name)
+        if value is not None and value != "":
+            event.setdefault(legacy_name, value)
 
 
 def _derived_value(
@@ -330,6 +343,8 @@ class OntapPerfRestCollector:
                         "timestamp": collected_at,
                         "value": current_value,
                     }
+            if object_name == "volume":
+                _add_volume_legacy_fields(event)
             events.append(event)
         return events, next_samples
 
